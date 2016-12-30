@@ -1,2 +1,4 @@
 # node-buildcpp
-A simple build script for c++. Currently only supports Windows.
+A simple build script for c++. 
+
+Currently only supports Windows.
