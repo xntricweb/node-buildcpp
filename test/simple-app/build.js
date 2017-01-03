@@ -11,7 +11,12 @@
  * @type {Object}
  */
 const buildProperties = {
-  
+  profiles: [
+    debug: {
+      define: ['DEBUG'],
+
+    }
+  ]
 };
 
 module.exports = buildProperties;
