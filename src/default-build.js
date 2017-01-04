@@ -1,20 +1,22 @@
 
 module.exports = {
-  //default include folders
-  "include":["./includes"],
-  // if a project name is supplied the build application may use it to guess a
-  // name if one is not specifically supplied with a target
-  "name": "",
+  "common": {
+    //default include folders
+    "include":["./includes"],
+    // if a project name is supplied the build application may use it to guess a
+    // name if one is not specifically supplied with a target
+    "name": "",
 
-  // the build data file version
-  // may be useful in the future for compatibility
-  "version": "0.0.1",
-  
-  //static libraries to link against
-  "libs": [],
-  "cflags":"",
-  "lflags":"",
-  "build-output": "./build",
+    // the build data file version
+    // may be useful in the future for compatibility
+    "version": "0.0.1",
+
+    //static libraries to link against
+    "libs": [],
+    "cflags":"",
+    "lflags":"",
+    "build-output": "./build"
+  },
 
   // this must be overriden by the project build
   "target": [

@@ -28,11 +28,14 @@ function _stats(file) {
 }
 
 function loadOptions(file) {
-  let info = path.info(file);
+  let info = path.parse(file);
   let o = require(file);
   if (typeof o == 'function') o = o();
-  if (typeof o != 'object' || !o.source)
-  else return o;
+  o.buildPath = info.dir;
+  o.buildFile = info.base;
+  if (!o.name) o.name = info.name;
+  
+  return o;
 }
 
 module.exports = function(path){

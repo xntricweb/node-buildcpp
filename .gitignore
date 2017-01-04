@@ -1,7 +1,3 @@
-.DS_Store
+
 node_modules
-*.sock
-build
-yarn.lock
-dist
-coverage
+bower_components

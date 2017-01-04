@@ -10,5 +10,9 @@
     "cbuild": "./bin/cbuild.js"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "clone": "^2.1.0",
+    "merge": "^1.2.0"
+  }
 }
