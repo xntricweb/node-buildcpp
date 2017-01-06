@@ -1,6 +1,6 @@
 
 module.exports = {
-  "common": {
+  "env": {
     //default include folders
     "include":["./includes"],
     // if a project name is supplied the build application may use it to guess a
@@ -19,7 +19,7 @@ module.exports = {
   },
 
   // this must be overriden by the project build
-  "target": [
+  "targets": [
     /**
      * {
      *   "source": ["./src/*.cpp"],

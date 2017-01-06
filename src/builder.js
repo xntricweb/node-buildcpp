@@ -2,48 +2,62 @@ const defaultBuild = require('./default-build.js');
 const merge = require('./merge.js');
 const clone = require('clone');
 const os = require('os');
-const buildFileLoader = require('./build-options.js');
+const fileLoader = require('./file-loader.js');
+
+let buildFilePossibilities = [
+  '',
+  '.js',
+  '.json',
+  '/build.js',
+  '/build.json'
+];
 
 module.exports = function(buildFile) {
   let builder;
-  switch (os.type()) {
-    case 'Windows_NT':
-      builder = require('./windows-build-helper.js')();
-      break;
-    default:
-      throw new Error("unsupported os");
-  }
 
   return builder.loadBuildFile(buildFile);
 }
 
 class Builder {
   constructor(buildFile) {
-    this.__targets = [];
-    this.__profile = {};
-    this.__build = {};
-    this.addBuildProperties(clone(defaultBuild));
+    this.targets = [];
+    this.profiles = {};
+    this.env = {};
 
-    if (buildFile) this.loadBuildFile(buildFile);
+    this.use(clone(defaultBuild));
+    if (buildFile) this.loadProject(buildFile);
   }
 
-  addBuildProperties(build) {
-    if (build.common) merge(this.__build, build.common);
-    if (build.target) this.__targets.push(...build.targets);
-    if (build.profile) merge(this.__profile, build.profile);
+  use(build) {
+    if (build.env) merge(this.env, build.env);
+    if (build.targets) this.targets.push(...build.targets);
+    if (build.profiles) merge(this.profiles, build.profiles);
   }
 
-  loadBuildFile(buildFile) {
-    return buildFileLoader(buildFile).then((build) => {
-      this.addBuildProperties(build);
+  loadProject(buildFile) {
+    return fileLoader(buildFile, Builder.BuildFileSearchTypes).then(d => {
+      let info = path.info(d.file);
+      this.root = info.dir;
+      this.name = info.name;
+
+      let project;
+
+      switch (info.ext) {
+        case 'json': project = JSON.parse(d.buff.toString); break;
+        case 'js': project = _eval(d.buff, this, true); break;
+      }
+
+      if (!project) throw new Error("Invalid project file!");
+
+      this.use(project);
       return this;
-    })
+    });
   }
 
   build(profile) {
     return new Promise((res, rej) => {
       if (!this._build) {
-        let err = new Error("Build is currently not supported on this platform.");
+        let err = new Error("ENOI: Build is currently not supported on this platform.");
         err.target = target;
         rej(err);
       }
@@ -64,15 +78,21 @@ class Builder {
   }
 
   clean(profile) {
-    return new Promise(res, rej) {
+    return new Promise((res, rej) => {
       if (!this._clean) {
-        let err = new Error("Clean is currently not supported on this platform.");
+        let err = new Error("ENOI: Clean is currently not supported on this platform.");
         err.target = target;
         rej(err);
       }
       return this._clean(profile);
-    }
+    });
+  }
+
+  static loadBuilder(project, os=os.type()) {
+    let Builder = require(`./builder-${os}.js`);
+    return new Builder(project);
   }
 }
 
+Builder.BuildFileSearchTypes = buildFilePossibilities;
 module.exports.Builder = Builder;
