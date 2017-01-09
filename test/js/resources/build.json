@@ -1,3 +1,19 @@
 {
-  "method": "json"
+  "method": "json",
+  "env": {
+    "parts": ["env"]
+  },
+  "targets": [
+    {
+      "parts": ["target1"]
+    },
+    {
+      "parts": ["target2"]
+    }
+  ],
+  "profiles": {
+    "test": {
+      "parts": ["profile"]
+    }
+  }
 }

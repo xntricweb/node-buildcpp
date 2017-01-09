@@ -3,6 +3,9 @@ const merge = require('./merge.js');
 const clone = require('clone');
 const os = require('os');
 const fileLoader = require('./file-loader.js');
+const path = require('path');
+const _eval = require('eval');
+const debug = require('debug')('ama:builder');
 
 let buildFilePossibilities = [
   '',
@@ -12,85 +15,102 @@ let buildFilePossibilities = [
   '/build.json'
 ];
 
-module.exports = function(buildFile) {
-  let builder;
-
-  return builder.loadBuildFile(buildFile);
+module.exports = function(project) {
+  return Builder.loadBuilder(project);
 }
 
 class Builder {
-  constructor(buildFile) {
-    this.targets = [];
-    this.profiles = {};
-    this.env = {};
+  constructor() {
+    this.reset();
+  }
 
-    this.use(clone(defaultBuild));
-    if (buildFile) this.loadProject(buildFile);
+  reset() {
+    debug('Reseting builder');
+    this.targets = clone(defaultBuild.targets);
+    this.profiles = clone(defaultBuild.profiles);
+    this.env = clone(defaultBuild.env);
   }
 
   use(build) {
+    debug('importing build data');
     if (build.env) merge(this.env, build.env);
     if (build.targets) this.targets.push(...build.targets);
     if (build.profiles) merge(this.profiles, build.profiles);
+    return this;
   }
 
   loadProject(buildFile) {
-    return fileLoader(buildFile, Builder.BuildFileSearchTypes).then(d => {
-      let info = path.info(d.file);
-      this.root = info.dir;
-      this.name = info.name;
+    debug('loading build project');
+    return fileLoader(buildFile, ...Builder.BuildFileSearchTypes).then(d => {
+      this.reset();
+      let info = path.parse(d.file);
+
+      this.env.projectRoot = info.dir;
+      this.env.projectName = info.name;
 
       let project;
 
       switch (info.ext) {
-        case 'json': project = JSON.parse(d.buff.toString); break;
-        case 'js': project = _eval(d.buff, this, true); break;
+        case '.json': project = JSON.parse(d.buff.toString()); break;
+        case '.js': project = _eval(d.buff.toString(), d.file, this, true); break;
       }
 
       if (!project) throw new Error("Invalid project file!");
 
       this.use(project);
       return this;
+    }, (err) => {
+      debug("Project file not found @ %s", buildFile);
+      throw err;
     });
   }
 
+  _mergeTargets(profile, cb) {
+    debug('performing target merge/iteration');
+    let env = clone(this.env);
+
+    if (profile) {
+      if (this.profiles[profile] === undefined)
+      return Promise.reject(new Error('ENOP: Invalid profile: ' + profile));
+
+      merge(env, this.profiles[profile]);
+    }
+
+    return Promise.all(this.targets.map((target) => {
+      return cb(merge(clone(env), target));
+    }));
+  }
+
   build(profile) {
-    return new Promise((res, rej) => {
-      if (!this._build) {
-        let err = new Error("ENOI: Build is currently not supported on this platform.");
-        err.target = target;
-        rej(err);
-      }
+    debug('initiating build');
+    if (!this._build) {
+      let err = new Error("ENOI: Build is currently not supported on this platform.");
+      err.profile = profile;
+      return Promise.reject(err);
+    }
 
-      let build = clone(this.__build);
-
-      if (profile) {
-        if (build.profile[profile] === undefined)
-          return rej(new Error('Invalid profile: ' + profile));
-        merge(build, build.profile[profile]);
-      }
-
-      let targets = this.__target;
-      return Promise.all(targets.map((target) => {
-        return this._build(merge(clone(build), target));
-      }));
+    return this._mergeTargets(profile, target => {
+      return this._build(target);
     });
   }
 
   clean(profile) {
-    return new Promise((res, rej) => {
-      if (!this._clean) {
-        let err = new Error("ENOI: Clean is currently not supported on this platform.");
-        err.target = target;
-        rej(err);
-      }
-      return this._clean(profile);
+    debug('initiating clean');
+    if (!this._clean) {
+      let err = new Error("ENOI: Clean is currently not supported on this platform.");
+      err.profile = profile;
+      return Promise.reject(err);
+    }
+
+    return this._mergeTargets(profile, target => {
+      return this._clean(target);
     });
   }
 
-  static loadBuilder(project, os=os.type()) {
-    let Builder = require(`./builder-${os}.js`);
-    return new Builder(project);
+  static loadBuilder(project, _os=os.type()) {
+    let _builder = new (require(`./builder-${_os}.js`))();
+    if (project) return _builder.loadProject(project);
+    else return Promise.resolve(_builder);
   }
 }
 

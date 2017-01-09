@@ -13,9 +13,7 @@ module.exports = {
 
     //static libraries to link against
     "libs": [],
-    "cflags":"",
-    "lflags":"",
-    "build-output": "./build"
+    "output": "./build"
   },
 
   // this must be overriden by the project build
@@ -44,10 +42,10 @@ module.exports = {
   "profiles": {
     "debug": {
       "define": ["DEBUG"],
-      "build-output": "${build-output}/debug"
+      "output": "+/debug"
     },
     "release": {
-      "build-output": "${build-output}/release"
+      "output": "+/release"
     }
   }
 }

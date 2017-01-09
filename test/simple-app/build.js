@@ -11,12 +11,15 @@
  * @type {Object}
  */
 const buildProperties = {
-  profiles: [
-    debug: {
-      define: ['DEBUG'],
-
+  targets: [{
+    source: ['simple.c'],
+    target: 'simple.exe'
+  }],
+  profiles: {
+    test: {
+      output: '+/test'
     }
-  ]
+  }
 };
 
 module.exports = buildProperties;
