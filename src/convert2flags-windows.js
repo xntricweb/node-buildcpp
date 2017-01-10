@@ -15,7 +15,7 @@ function convert2flags(build) {
     args.push(...build.define.map( def => '/D' + def ));
 
   if (build.include && build.include.length)
-    args.push(...build.include.map( inc => '/I ' + inc ));
+    args.push(...build.include.map( inc => '/I' + inc ));
 
   if (build.cflags && build.cflags.length)
     args.push(...build.cflags.map( flag => '/' + flag ));

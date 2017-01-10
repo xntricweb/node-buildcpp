@@ -14,10 +14,10 @@ const WINDOWS_BUILDER_VERSION = "0.0.1";
 
 let defaultBuild = {
   env: {
-    arch: 'amd64_x86',
+    arch: 'x86',
     cflags: ['Wall']
   },
-  profile: {
+  profiles: {
     debug: {
       cflags: ['O0']
     },
@@ -37,15 +37,16 @@ class WindowsBuilder extends Builder {
 
   _build(build) {
     debug('preparing for windows build');
-    return loadBuildEnvironment(build.arch || 'amd_x86')
+    return loadBuildEnvironment(build.arch || 'x86')
     .then(mkdir.bind(this, path.resolve(build.projectRoot, build.output)))
     .then(env => {
       debug('starting windows build');
       let cflags = convert2flags(build);
       process.env.Path = env.Path;
 
+      console.log("executing >> cl %s", cflags.join(' '));
       return run('cl.exe', cflags, {env:env, stdio: 'inherit', cwd: build.projectRoot})
-      .then((code) => {
+      .then(code => {
         debug('build completed with code ' + code);
         if (code !== 0) {
           let err = new Error(`Build failed with code: ${code}`);
@@ -70,6 +71,8 @@ function loadBuildEnvironment(arch) {
     debug('preparing build environment');
 
     let data = '';
+    let _debug = '';
+
     let cmd = spawn('cmd.exe', {
       env: process.env,
       stdio: ['pipe', 'pipe', 'pipe', 'pipe']
@@ -77,14 +80,22 @@ function loadBuildEnvironment(arch) {
     cmd.stdio[3].on('data', (buf) => {
       data += buf.toString();
     });
+    cmd.stdout.on('data', (buf) => {
+      _debug += buf.toString();
+    })
+    cmd.stderr.on('data', (buf) => {
+      _debug += buf.toString();
+    })
 
     cmd.on('exit', (code)=> {
+      debug("raw environment debugging:\n", _debug);
+      debug("Processing evironment variables");
+
       let env = {};
       data.split('\r\n').forEach((kv)=>{
         let [k, v] = kv.split('=');
         if (!(k===undefined || v===undefined)) env[k] = v;
       });
-
       debug('Build environment ready')
       res(env);
     });

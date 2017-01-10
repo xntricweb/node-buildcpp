@@ -5,6 +5,7 @@ describe('windows-builder', function() {
   describe('build', function() {
     it('should build a simple c application', function() {
       let builder = new WindowsBuilder();
+
       return builder.loadProject('test/simple-app')
       .then(function() {
         return builder.build('test')
@@ -15,6 +16,7 @@ describe('windows-builder', function() {
           })
         })
       })
+
     })
   })
 })

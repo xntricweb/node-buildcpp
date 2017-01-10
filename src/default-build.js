@@ -2,7 +2,7 @@
 module.exports = {
   "env": {
     //default include folders
-    "include":["./includes"],
+    "include":["include"],
     // if a project name is supplied the build application may use it to guess a
     // name if one is not specifically supplied with a target
     "name": "",
